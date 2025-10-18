@@ -14,7 +14,7 @@ SpeakTeX is a web application that converts spoken mathematical expressions into
 5. User can copy LaTeX code or save to history
 
 ## 👥 Team Roles
-|   Team Member  | Responsibilities |
+|   Team Member  |   Contribution   | 
 |----------------|------------------|
 |   Yubin Li     | Frontend Development, UI/UX Design |
 |   Zongze Wu    | Backend Development, Gemini API Integration |
