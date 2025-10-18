@@ -15,6 +15,13 @@
 5. Frontend renders LaTeX using MathJax in real-time
 6. User can copy LaTeX code or save to history
 
+## ✨ Key Features
+- **Real-time Voice Input** - 
+- **Instant LaTeX Generation** - 
+- **Live Preview** - 
+- **One-Click Copy** - Copy generated LaTeX code directly to your clipboard
+- **High Accuracy** - 
+- **Cross-Platform** - 
 
 ## 👥 Team Roles
 |   Team Member  |  Contribution    |
@@ -24,19 +31,8 @@
 
 
 ## 🧩 Tech Stack
-- **Frontend:** React + Vite
-- **Backend:** Flask (Python)
-- **AI Model:** Google Gemini API
-- **LaTeX Rendering:** MathJax
-- **Tools:** GitHub, GitHub Actions
-
-
-## ✨ Key Features
-- **Real-time Voice Input** - 
-- **Instant LaTeX Generation** - 
-- **Live Preview** - 
-- **One-Click Copy** - Copy generated LaTeX code directly to your clipboard
-- **High Accuracy** - 
-- **Cross-Platform** - 
-
-
+- **Frontend:** React
+- **Backend:**
+- **AI Model:** 
+- **LaTeX Rendering:**
+- **Tools:** 
