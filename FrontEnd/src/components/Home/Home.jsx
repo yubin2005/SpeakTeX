@@ -103,8 +103,7 @@ const Home = ({ isLoggedIn, username, handleLogout }) => {
         </section>
       </main>
 
-      {/* Empty space at bottom for better spacing */}
-      <div className="bottom-spacing"></div>
+      {/* End of main content */}
     </div>
   )
 }
