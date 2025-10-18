@@ -4,7 +4,7 @@
 ## 🚀 Project Overview
 
 
-## 🎯 Our Project Goal: Audio \rightarrow LaTeX
+## 🎯 Our Project Goal: Audio → LaTeX
 - A web application: Users speak mathematical expressions into a microphone. The application converts the speech to LaTeX code in real time and renders the mathematical expression.
 
 ## ⚙️ How It Works
