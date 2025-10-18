@@ -4,7 +4,7 @@
 ## 🚀 Project Overview
 - SpeakTeX is a web application that transforms spoken mathematical expressions into LaTeX code and renders them in real time.  Hands-free, just by speaking naturally!
 
-## 🎯 Our Project Goal: Audio -> LaTeX
+## 🎯 Our Project Goal: Audio → LaTeX
 - A web application: Users speak mathematical expressions into a microphone. The application converts the speech to LaTeX code in real time and renders the mathematical expression.
 
 ## ⚙️ How It Works
