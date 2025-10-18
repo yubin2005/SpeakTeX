@@ -28,7 +28,7 @@ jobs:
         cd FrontEnd
         npm run build
         
-  backend-test:
+  BackEnd-test:
     runs-on: ubuntu-latest
     
     steps:
@@ -41,11 +41,11 @@ jobs:
         
     - name: Install dependencies
       run: |
-        cd backend
+        cd BackEnd
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
     - name: Health check
       run: |
-        cd backend
+        cd BackEnd
         # Add health check tests when implemented
