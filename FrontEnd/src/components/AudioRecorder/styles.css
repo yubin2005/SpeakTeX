@@ -1,0 +1,161 @@
+.audio-recorder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.record-button {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-light-cream) 0%, var(--color-lemon-yellow) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(252, 211, 77, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.record-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(252, 211, 77, 0.4);
+}
+
+.record-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(252, 211, 77, 0.3);
+}
+
+.record-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.record-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+/* Recording state */
+.record-button.recording {
+  background: linear-gradient(135deg, #fecaca 0%, #ef4444 100%);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.record-button.recording .record-icon {
+  animation: scale-pulse 1.5s ease-in-out infinite;
+}
+
+/* Processing state */
+.record-button.processing {
+  background: linear-gradient(135deg, var(--color-lemon-yellow) 0%, var(--color-medium-yellow) 100%);
+}
+
+.record-button.processing .record-icon {
+  animation: spin 2s linear infinite;
+}
+
+/* Error state */
+.record-button.error {
+  animation: shake 0.5s ease-in-out;
+}
+
+.status-text {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  text-align: center;
+  min-height: 1.5rem;
+  opacity: 0.8;
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+.recording-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ef4444;
+  letter-spacing: 0.1em;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(239, 68, 68, 0.6);
+  }
+}
+
+@keyframes scale-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20%, 60% {
+    transform: translateX(-10px);
+  }
+  40%, 80% {
+    transform: translateX(10px);
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .record-button {
+    width: 100px;
+    height: 100px;
+  }
+
+  .record-icon {
+    font-size: 2.5rem;
+  }
+
+  .status-text {
+    font-size: 0.875rem;
+  }
+}
+

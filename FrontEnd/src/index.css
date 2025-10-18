@@ -1,11 +1,71 @@
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 :root {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.5;
+  /* Lemon Yellow Fresh Color Scheme */
+  --color-light-cream: #fef3c7;
+  --color-lemon-yellow: #fde68a;
+  --color-medium-yellow: #fcd34d;
+  --color-text-primary: #713f12;
+  --color-text-secondary: #92400e;
+  --color-latex-text: #854d0e;
+  --color-bg-top: #fefce8;
+  --color-bg-middle: #fef9c3;
+  --color-bg-bottom: #ffffff;
+  --color-border: rgba(252, 211, 77, 0.3);
+  
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
   font-weight: 400;
+  color: var(--color-text-primary);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg-middle) 50%, var(--color-bg-bottom) 100%);
+  background-attachment: fixed;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+button {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 2px solid var(--color-medium-yellow);
+  outline-offset: 2px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+input, textarea {
+  font-family: inherit;
+}
+
+/* MathJax styling */
+mjx-container {
+  font-family: 'Times New Roman', Times, serif !important;
+  color: var(--color-latex-text) !important;
 }
