@@ -16,8 +16,8 @@ SpeakTeX is a web application that converts spoken mathematical expressions into
 ## 👥 Team Roles
 |   Team Member  |   Contribution   | 
 |----------------|------------------|
-|   Yubin Li     | Frontend Development, UI/UX Design |
-|   Zongze Wu    | Backend Development, Gemini API Integration |
+|   Yubin Li     | |
+|   Zongze Wu    | |
 
 ## 🧩 Tech Stack
 - **Frontend:** React, TypeScript, Vite, MathJax
@@ -25,41 +25,3 @@ SpeakTeX is a web application that converts spoken mathematical expressions into
 - **AI Model:** Google Gemini 1.5 Flash
 - **LaTeX Rendering:** MathJax
 - **Tools:** Axios, Flask-CORS
-
-## ✨ Key Features
-- **Real-time Voice Input** - Record mathematical expressions with your microphone
-- **Instant LaTeX Generation** - Powered by Google's Gemini API
-- **Live Preview** - See your LaTeX rendered in real-time
-- **One-Click Copy** - Copy generated LaTeX code directly to your clipboard
-- **History Panel** - Access your previously generated expressions
-- **High Accuracy** - Optimized prompts for mathematical expression recognition
-- **Cross-Platform** - Works on desktop and mobile browsers
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js (v18+)
-- Python (v3.9+)
-- Google Gemini API key
-
-### Frontend Setup
-```bash
-cd FrontEnd
-npm install
-npm run dev
-```
-
-### Backend Setup
-```bash
-cd backend
-# Create a virtual environment
-python -m venv venv
-# Activate the virtual environment (Windows)
-venv\Scripts\activate
-# Install dependencies
-pip install -r requirements.txt
-# Create .env file with your Gemini API key
-echo GEMINI_API_KEY=your_api_key_here > .env
-# Run the server
-python run.py
-```
