@@ -16,7 +16,7 @@
 
 
 ## 👥 Team Roles
-|   Team Member  | Responsibilities |
+|   Team Member  |   Contribution   | 
 |----------------|------------------|
 |   Yubin Li     |                  |
 |   Zongze Wu    |                  |
