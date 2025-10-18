@@ -70,14 +70,15 @@ const Login = ({ onLogin }) => {
                 required
                 className="input-field"
               />
-              <button 
-                type="button" 
+              <span 
                 onClick={togglePasswordVisibility} 
                 className="toggle-password"
+                role="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
+                tabIndex="-1"
               >
                 {showPassword ? "👁️" : "👁️‍🗨️"}
-              </button>
+              </span>
             </div>
           </div>
           

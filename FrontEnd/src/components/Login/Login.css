@@ -217,12 +217,13 @@ form {
 .toggle-password {
   position: absolute;
   right: 16px;
-  background: transparent;
+  background: none;
   border: none;
   cursor: pointer;
   color: #6b7280;
   font-size: 18px;
   padding: 0;
+  transition: color 0.2s;
 }
 
 /* Forgot password link */
@@ -396,12 +397,5 @@ form {
     padding: 0.75rem 1rem;
     flex-direction: column;
     gap: 0.5rem;
-  }
-}
-
-/* Dark mode support - basic styles */
-@media (prefers-color-scheme: dark) {
-  .card {
-    background: rgba(255, 255, 255, 0.85);
   }
 }

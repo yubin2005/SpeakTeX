@@ -177,9 +177,4 @@
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .card {
-    background: rgba(255, 255, 255, 0.85);
-  }
-}
+/* End of responsive enhancements */
