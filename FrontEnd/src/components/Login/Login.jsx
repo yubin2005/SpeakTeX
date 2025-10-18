@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import './Login.css'
 
 const Login = ({ onLogin }) => {
@@ -6,6 +7,7 @@ const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const navigate = useNavigate()
 
   // Handle form submission
   const handleSubmit = (e) => {
@@ -25,7 +27,12 @@ const Login = ({ onLogin }) => {
     <div className="login-container">
       {/* Top navigation bar */}
       <div className="top-bar">
-        <div className="logo">🎙️ SpeakTeX</div>
+        <Link to="/" className="logo-link">
+          <div className="logo">
+            <span className="logo-icon">🎙️</span>
+            <span className="logo-text">SpeakTeX</span>
+          </div>
+        </Link>
         <div className="subtitle">Voice to LaTeX</div>
       </div>
       
@@ -79,7 +86,7 @@ const Login = ({ onLogin }) => {
           </div>
           
           <button type="submit" className="login-btn">
-            Get Started
+            Log In
           </button>
         </form>
         
