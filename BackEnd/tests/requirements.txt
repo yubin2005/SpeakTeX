@@ -1,0 +1,12 @@
+# Test Dependencies for SpeakTeX Backend
+
+# AWS SDK
+boto3>=1.34.0
+botocore>=1.34.0
+
+# HTTP Client for API testing
+requests>=2.31.0
+
+# Environment Variable Loading
+python-dotenv>=1.0.0
+

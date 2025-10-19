@@ -1,0 +1,23 @@
+# Flask Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# AWS SDK
+boto3==1.34.0
+botocore==1.34.0
+
+# Environment Management
+python-dotenv==1.0.0
+
+# HTTP Client (for external API calls if needed)
+requests==2.31.0
+
+# Production WSGI Server
+gunicorn==21.2.0
+
+# Type Hints and Validation
+pydantic==2.5.0
+
+# Utilities
+python-dateutil==2.8.2
+
