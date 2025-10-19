@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/SpeakTex/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SpeakTeX</title>
+
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$']],
+          displayMath: [['$$', '$$']],
+          processEscapes: true,
+          processEnvironments: true,
+          packages: {'[+]': ['ams']}
+        },
+        svg: {
+          fontCache: 'global'
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="module" crossorigin src="/SpeakTex/assets/index-5zO02G6Q.js"></script>
+    <link rel="modulepreload" crossorigin href="/SpeakTex/assets/vendor-CsVrmObc.js">
+    <link rel="stylesheet" crossorigin href="/SpeakTex/assets/index-B8JZPdqa.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
