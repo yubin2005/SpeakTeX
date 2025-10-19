@@ -5,6 +5,7 @@ import TranscriptDisplay from '../TranscriptDisplay'
 import LatexPreview from '../LatexPreview'
 import HistoryPanel from '../HistoryPanel'
 import UserProfile from '../UserProfile'
+import geminiService from '../../services/geminiService'
 import './Home.css'
 
 const Home = ({ isLoggedIn, username, handleLogout }) => {
@@ -15,6 +16,8 @@ const Home = ({ isLoggedIn, username, handleLogout }) => {
   const [error, setError] = useState('')
   const [showHistory, setShowHistory] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [processingTime, setProcessingTime] = useState(null)
+  const [successMessage, setSuccessMessage] = useState('')
 
   // Handle scroll effects
   useEffect(() => {
@@ -35,107 +38,70 @@ const Home = ({ isLoggedIn, username, handleLogout }) => {
 
   // Handle recording completion
   const handleRecordingComplete = async (transcriptText) => {
-    setIsProcessing(true)
-    setError('')
-    
     if (transcriptText) {
       setTranscript(transcriptText)
-      
-      try {
-        // For now, we'll use a simple conversion for LaTeX
-        // In a real app, you would call another API endpoint to convert text to LaTeX
-        const latexText = await convertToLatex(transcriptText)
-        setLatex(latexText)
-      } catch (err) {
-        console.error('Error converting to LaTeX:', err)
-        setError('Failed to convert to LaTeX')
-      }
     } else {
       setError('Failed to transcribe audio')
     }
-    
-    setIsProcessing(false)
   }
-  
-  // Improved function to convert text to LaTeX
-  const convertToLatex = async (text) => {
-    // Convert word numbers to digits
-    const wordToNumber = {
-      'zero': '0',
-      'one': '1',
-      'two': '2',
-      'three': '3',
-      'four': '4',
-      'five': '5',
-      'six': '6',
-      'seven': '7',
-      'eight': '8',
-      'nine': '9',
-      'ten': '10'
-    };
+
+  // Handle manual submission (Generate LaTeX button)
+  const handleGenerateLatex = async (transcriptText) => {
+    setIsProcessing(true)
+    setError('')
+    setSuccessMessage('')
+    setProcessingTime(null)
     
-    // First convert word numbers to digits
-    let processedText = text.toLowerCase();
+    const startTime = performance.now()
     
-    // Replace word numbers with digits
-    Object.keys(wordToNumber).forEach(word => {
-      const regex = new RegExp(`\\b${word}\\b`, 'gi');
-      processedText = processedText.replace(regex, wordToNumber[word]);
-    });
-    
-    // Now apply mathematical replacements
-    let latexText = processedText
-      // Basic operations
-      .replace(/\bplus\b/g, "+")
-      .replace(/\bminus\b/g, "-")
-      .replace(/\btimes\b/g, "\\times ")
-      .replace(/\bdivided by\b/g, "\\div ")
-      .replace(/\bequal to\b/g, "=")
-      .replace(/\bequals\b/g, "=")
-      .replace(/\bis equal to\b/g, "=")
+    try {
+      // Call Gemini API to convert text to LaTeX
+      const latexText = await geminiService.convertToLatex(transcriptText)
+      const endTime = performance.now()
+      const duration = ((endTime - startTime) / 1000).toFixed(1)
       
-      // Powers
-      .replace(/\bsquared\b/g, "^2")
-      .replace(/\bcubed\b/g, "^3")
-      .replace(/\bto the power of (\w+)\b/g, "^{$1}")
-      .replace(/\bto the (\w+) power\b/g, "^{$1}")
+      setLatex(latexText)
+      setProcessingTime(duration)
+      setSuccessMessage(`✅ Generated in ${duration}s`)
       
-      // Fractions
-      .replace(/\bfraction\b/g, "\\frac")
-      .replace(/(\d+) over (\d+)/g, "\\frac{$1}{$2}")
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage('')
+      }, 5000)
+    } catch (err) {
+      console.error('Error converting to LaTeX:', err)
       
-      // Calculus
-      .replace(/\bintegral\b/g, "\\int ")
-      .replace(/\bfrom (\w+) to (\w+)\b/g, "_{$1}^{$2}")
-      .replace(/\bderivative of\b/g, "\\frac{d}{dx}")
+      // Determine error type and provide user-friendly message
+      let errorMessage = 'Failed to convert to LaTeX'
       
-      // Trigonometry
-      .replace(/\bsine\b/g, "\\sin ")
-      .replace(/\bcosine\b/g, "\\cos ")
-      .replace(/\btangent\b/g, "\\tan ")
-      .replace(/\bpi\b/g, "\\pi ")
+      if (err.message.includes('Failed to fetch') || err.message.includes('Network')) {
+        errorMessage = '❌ Network error: Failed to connect to Gemini API'
+      } else if (err.message.includes('timeout') || err.message.includes('timed out')) {
+        errorMessage = '❌ Request timed out, please try again'
+      } else if (err.message.includes('API error')) {
+        errorMessage = `❌ Gemini API error: ${err.message}`
+      } else {
+        errorMessage = `❌ Error: ${err.message}`
+      }
       
-      // Roots
-      .replace(/\bsquare root of\b/g, "\\sqrt{")
-      .replace(/\bcube root of\b/g, "\\sqrt[3]{")
+      setError(errorMessage)
       
-      // Parentheses
-      .replace(/\bleft parenthesis\b/g, "(")
-      .replace(/\bright parenthesis\b/g, ")")
-      
-      // Clean up extra spaces
-      .replace(/\s+/g, " ")
-      .trim();
-    
-    // Add closing braces for square roots if needed
-    const openSqrt = (latexText.match(/\\sqrt\{/g) || []).length + (latexText.match(/\\sqrt\[\d+\]\{/g) || []).length;
-    const closeBraces = (latexText.match(/\}/g) || []).length;
-    
-    if (openSqrt > closeBraces) {
-      latexText += "}".repeat(openSqrt - closeBraces);
+      // Clear error message after 8 seconds
+      setTimeout(() => {
+        setError('')
+      }, 8000)
+    } finally {
+      setIsProcessing(false)
     }
-    
-    return latexText;
+  }
+
+  // Handle transcript change (user editing)
+  const handleTranscriptChange = (newTranscript) => {
+    setTranscript(newTranscript)
+    // Clear success message when user edits
+    if (successMessage) {
+      setSuccessMessage('')
+    }
   }
 
   return (
@@ -171,7 +137,14 @@ const Home = ({ isLoggedIn, username, handleLogout }) => {
           {/* Middle Section - Transcript Display */}
           <section className="card transcript-card">
             <h2 className="card-title">Transcript</h2>
-            <TranscriptDisplay transcript={transcript} />
+            <TranscriptDisplay 
+              transcript={transcript}
+              onTranscriptChange={handleTranscriptChange}
+              onSubmit={handleGenerateLatex}
+              isProcessing={isProcessing}
+            />
+            {error && <div className="status-message error-message">{error}</div>}
+            {successMessage && <div className="status-message success-message">{successMessage}</div>}
           </section>
 
           {/* Right Section - LaTeX Preview */}

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini API Test - SpeakTeX</title>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$']],
+          displayMath: [['$$', '$$']],
+          processEscapes: true,
+          processEnvironments: true,
+          packages: {'[+]': ['ams']}
+        },
+        svg: {
+          fontCache: 'global'
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            color: red;
+            padding: 12px;
+            background: #ffe6e6;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .latex-code {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .latex-preview {
+            background: #fff;
+            border: 2px solid #4CAF50;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 10px 0;
+            min-height: 60px;
+            text-align: center;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .test-examples {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .test-examples h3 {
+            margin-top: 0;
+        }
+        .example-item {
+            margin: 8px 0;
+            cursor: pointer;
+            color: #0066cc;
+            text-decoration: underline;
+        }
+        .example-item:hover {
+            color: #004499;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Gemini API LaTeX Conversion Test</h1>
+        
+        <div class="test-examples">
+            <h3>📝 Test Examples (Click to use):</h3>
+            <div class="example-item" onclick="useExample(this)">I want a latex math equation expression on The sum from i equals 1 to 100 of i equals 100 times 100 and 1 over 2, which equals 5,000 and 50</div>
+            <div class="example-item" onclick="useExample(this)">x squared plus 2x plus 1 equals 0</div>
+            <div class="example-item" onclick="useExample(this)">integral from 0 to pi of sine x dx</div>
+            <div class="example-item" onclick="useExample(this)">the square root of a squared plus b squared</div>
+            <div class="example-item" onclick="useExample(this)">matrix with entries 1 2 in the first row and 3 4 in the second row</div>
+            <div class="example-item" onclick="useExample(this)">f of x equals x squared when x is greater than 0, and negative x when x is less than or equal to 0</div>
+        </div>
+
+        <div class="test-section">
+            <h3>Enter spoken mathematical expression:</h3>
+            <textarea id="inputText" placeholder="Enter a spoken mathematical expression (e.g., 'x squared plus 2 x plus 1 equals zero')">I want a latex math equation expression on The sum from i equals 1 to 100 of i equals 100 times 100 and 1 over 2, which equals 5,000 and 50</textarea>
+            <button onclick="convertToLatex()" id="convertBtn">Convert to LaTeX</button>
+            <div id="loading" class="loading" style="display:none;">⏳ Calling Gemini API...</div>
+            <div id="error" class="error" style="display:none;"></div>
+        </div>
+
+        <div class="result" id="result" style="display:none;">
+            <h3>📄 LaTeX Code (with delimiters):</h3>
+            <div class="latex-code" id="latexCode"></div>
+            
+            <h3>✨ Rendered Preview:</h3>
+            <div class="latex-preview" id="latexPreview"></div>
+        </div>
+    </div>
+
+    <script>
+        const GEMINI_API_KEY = 'AIzaSyDM0wa6jUmfv9mW9MZsJ2LB94nhR0KHbqo';
+        const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+
+        function useExample(element) {
+            document.getElementById('inputText').value = element.textContent;
+        }
+
+        async function convertToLatex() {
+            const inputText = document.getElementById('inputText').value.trim();
+            const convertBtn = document.getElementById('convertBtn');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const resultDiv = document.getElementById('result');
+            const latexCodeDiv = document.getElementById('latexCode');
+            const latexPreviewDiv = document.getElementById('latexPreview');
+
+            if (!inputText) {
+                errorDiv.textContent = 'Please enter some text';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Reset UI
+            errorDiv.style.display = 'none';
+            resultDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            convertBtn.disabled = true;
+
+            const prompt = `Convert this spoken mathematical expression into complete LaTeX code.
+
+IMPORTANT FORMATTING RULES:
+- For display equations (centered, large), wrap in $$...$$ (double dollar signs)
+- For inline equations (small, in text), wrap in $...$ (single dollar signs)
+- Use \\begin{} and \\end{} for matrices, aligned equations, cases, etc.
+- Choose the most appropriate LaTeX format based on the expression complexity
+- Include ALL necessary LaTeX delimiters in your output
+- Return ONLY the LaTeX code, no explanations or markdown
+
+Spoken expression: ${inputText}`;
+
+            const requestBody = {
+                contents: [{
+                    parts: [{
+                        text: prompt
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.1,
+                    maxOutputTokens: 2048
+                }
+            };
+
+            try {
+                const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} - ${JSON.stringify(errorData)}`);
+                }
+
+                const data = await response.json();
+                let latexCode = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!latexCode) {
+                    throw new Error('No LaTeX code returned from API');
+                }
+
+                // Clean up response
+                latexCode = latexCode.trim()
+                    .replace(/```latex\s*/g, '')
+                    .replace(/```\s*/g, '')
+                    .trim();
+
+                // Display results
+                latexCodeDiv.textContent = latexCode;
+                latexPreviewDiv.textContent = latexCode;
+                
+                // Trigger MathJax rendering ONLY on preview
+                if (window.MathJax) {
+                    window.MathJax.typesetPromise([latexPreviewDiv]).catch((err) => {
+                        console.error('MathJax rendering error:', err);
+                        errorDiv.textContent = 'MathJax rendering failed: ' + err.message;
+                        errorDiv.style.display = 'block';
+                    });
+                }
+
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = 'Error: ' + error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loadingDiv.style.display = 'none';
+                convertBtn.disabled = false;
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('inputText').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && event.ctrlKey) {
+                convertToLatex();
+            }
+        });
+    </script>
+</body>
+</html>
+
