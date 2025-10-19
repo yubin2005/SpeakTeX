@@ -34,7 +34,6 @@
 | Zongze Wu   | AWS Architecture, Lambda Functions, S3/DynamoDB Integration, Gemini API Integration                 |
 
 ## 🧩 Tech Stack
-
 - **Frontend:** React + Vite
 - **Backend:** AWS Lambda + Flask API + AWS S3 + DynamoDB
 - **AI Model:** Google Gemini 1.5 Flash API
