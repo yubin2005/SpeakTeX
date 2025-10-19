@@ -37,9 +37,17 @@ const Home = ({ isLoggedIn, username, handleLogout }) => {
   }, [])
 
   // Handle recording completion
-  const handleRecordingComplete = async (transcriptText) => {
-    if (transcriptText) {
-      setTranscript(transcriptText)
+  const handleRecordingComplete = async (result) => {
+    // Handle both old format (string) and new format (object)
+    if (typeof result === 'string') {
+      // Old format: just transcript text
+      setTranscript(result)
+    } else if (result && result.transcript) {
+      // New format: object with transcript and latex
+      setTranscript(result.transcript)
+      if (result.latex) {
+        setLatex(result.latex)
+      }
     } else {
       setError('Failed to transcribe audio')
     }

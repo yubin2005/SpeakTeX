@@ -82,3 +82,6 @@ Thumbs.db
 .cursor/
 
 package-lock.json
+
+*.webm
+*transcript.json

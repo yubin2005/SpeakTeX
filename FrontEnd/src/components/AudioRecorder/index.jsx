@@ -36,57 +36,86 @@ const AudioRecorder = ({ isRecording, isProcessing, onRecordingComplete, setIsRe
     await sendAudioToBackend(audioBlob)
   }
 
-  // Send audio to backend
+  // Upload audio directly to S3 via presigned URL
   const sendAudioToBackend = async (audioBlob) => {
     try {
-      const formData = new FormData()
-      formData.append('audio', audioBlob, 'recording.webm')
-
-      // First try to check if the backend is accessible
-      try {
-        await fetch('http://localhost:5000/api/test', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
-          mode: 'cors',
-        });
-      } catch (testError) {
-        console.warn('CORS test failed, proceeding with main request:', testError);
-      }
-
-      const response = await fetch('http://localhost:5000/api/transcribe', {
+      console.log('Step 1: Getting presigned upload URL from Lambda...')
+      
+      // Get presigned upload URL from Lambda
+      const uploadUrlResponse = await fetch('http://localhost:5000/get-upload-url', {
         method: 'POST',
-        body: formData,
-        mode: 'cors',
         headers: {
-          'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
-        credentials: 'omit'
+        body: JSON.stringify({ file_extension: 'webm' })
       })
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server responded with status: ${response.status}, ${errorText}`);
+      if (!uploadUrlResponse.ok) {
+        throw new Error(`Failed to get upload URL: ${uploadUrlResponse.status}`)
       }
 
-      const data = await response.json()
+      const uploadData = await uploadUrlResponse.json()
       
-      if (data.transcript) {
-        onRecordingComplete(data.transcript)
-      } else if (data.error) {
-        throw new Error(data.error);
-      } else {
-        // Fallback for testing - if backend is not working properly
-        console.warn('Using fallback transcription for testing');
-        onRecordingComplete('x squared plus 2x plus 1 equals 0');
+      if (!uploadData.success) {
+        throw new Error(uploadData.error || 'Failed to generate upload URL')
       }
-    } catch (error) {
-      console.error('Error sending audio to backend:', error)
+
+      console.log('Step 2: Uploading audio directly to S3...')
+      console.log('File will be saved as:', uploadData.file_key)
       
-      // For development purposes, use a fallback transcription
-      console.warn('Using fallback transcription for testing');
-      onRecordingComplete('x squared plus 2x plus 1 equals 0');
+      // Upload audio directly to S3 using presigned URL
+      const s3Response = await fetch(uploadData.upload_url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'audio/webm'
+        },
+        body: audioBlob
+      })
+
+      if (!s3Response.ok) {
+        throw new Error(`S3 upload failed: ${s3Response.status}`)
+      }
+
+      console.log('✓ Audio uploaded successfully to S3!')
+      console.log('✓ File key:', uploadData.file_key)
+      
+      console.log('Step 3: Starting AWS Transcribe job...')
+      
+      // Start transcription
+      const transcribeResponse = await fetch('http://localhost:5000/transcribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          s3_file_key: uploadData.file_key 
+        })
+      })
+
+      if (!transcribeResponse.ok) {
+        throw new Error(`Transcription failed: ${transcribeResponse.status}`)
+      }
+
+      const transcribeData = await transcribeResponse.json()
+      
+      if (!transcribeData.success) {
+        throw new Error(transcribeData.error || 'Transcription failed')
+      }
+
+      console.log('✓ Transcription completed!')
+      console.log('✓ Transcript:', transcribeData.transcript_text)
+      console.log('✓ LaTeX:', transcribeData.latex_code)
+      console.log('✓ Saved to:', transcribeData.filepath)
+      
+      // Return both transcript and LaTeX
+      onRecordingComplete({
+        transcript: transcribeData.transcript_text,
+        latex: transcribeData.latex_code
+      })
+      
+    } catch (error) {
+      console.error('Error in recording workflow:', error)
+      throw error
     }
   }
 

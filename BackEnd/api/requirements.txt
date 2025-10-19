@@ -1,23 +1,15 @@
-# Flask Framework
-Flask==3.0.0
-Flask-CORS==4.0.0
+# AWS SDK for Python
+boto3>=1.34.0
+botocore>=1.34.0
 
-# AWS SDK
-boto3==1.34.0
-botocore==1.34.0
+# Environment variable management
+python-dotenv>=1.0.0
 
-# Environment Management
-python-dotenv==1.0.0
-
-# HTTP Client (for external API calls if needed)
-requests==2.31.0
-
-# Production WSGI Server
-gunicorn==21.2.0
-
-# Type Hints and Validation
-pydantic==2.8.0
+# Type hints and validation (for service classes)
+pydantic>=2.8.0
 
 # Utilities
-python-dateutil==2.8.2
+python-dateutil>=2.8.2
 
+# Note: Flask dependencies removed - using serverless Lambda architecture
+# This requirements.txt is kept for the utility services (aws_config, s3_service)
