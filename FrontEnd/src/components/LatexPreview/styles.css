@@ -26,6 +26,9 @@
   border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow-x: auto;
+  height: 80px; /* Fixed height to prevent UI size changes */
+  display: flex;
+  align-items: center;
 }
 
 .latex-code pre {
@@ -49,7 +52,7 @@
   border: 1px solid var(--color-border);
   border-radius: 12px;
   text-align: center;
-  min-height: 80px;
+  height: 100px; /* Fixed height instead of min-height */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -100,7 +103,7 @@
   background: linear-gradient(135deg, rgba(254, 252, 232, 0.5) 0%, rgba(254, 249, 195, 0.5) 100%);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  min-height: 200px;
+  height: 200px; /* Fixed height instead of min-height */
 }
 
 .placeholder-icon {
