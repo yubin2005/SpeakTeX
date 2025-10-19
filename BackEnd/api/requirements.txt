@@ -11,5 +11,3 @@ pydantic>=2.8.0
 # Utilities
 python-dateutil>=2.8.2
 
-# Note: Flask dependencies removed - using serverless Lambda architecture
-# This requirements.txt is kept for the utility services (aws_config, s3_service)

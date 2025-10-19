@@ -7,7 +7,6 @@ const AudioRecorder = ({ isRecording, isProcessing, onRecordingComplete, setIsRe
   const audioChunksRef = useRef([])
   const timerRef = useRef(null)
 
-  // Set up and clean up the media recorder
   useEffect(() => {
     return () => {
       if (mediaRecorderRef.current) {
@@ -20,28 +19,22 @@ const AudioRecorder = ({ isRecording, isProcessing, onRecordingComplete, setIsRe
     }
   }, [])
 
-  // Handle recording data chunks
   const handleDataAvailable = (event) => {
     if (event.data.size > 0) {
       audioChunksRef.current.push(event.data)
     }
   }
 
-  // Handle recording stop
   const handleStop = async () => {
     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
     audioChunksRef.current = []
-    
-    // Send the audio to the backend for transcription
     await sendAudioToBackend(audioBlob)
   }
 
-  // Upload audio directly to S3 via presigned URL
   const sendAudioToBackend = async (audioBlob) => {
     try {
       console.log('Step 1: Getting presigned upload URL from Lambda...')
       
-      // Get presigned upload URL from Lambda
       const uploadUrlResponse = await fetch('http://localhost:5000/get-upload-url', {
         method: 'POST',
         headers: {
@@ -63,7 +56,6 @@ const AudioRecorder = ({ isRecording, isProcessing, onRecordingComplete, setIsRe
       console.log('Step 2: Uploading audio directly to S3...')
       console.log('File will be saved as:', uploadData.file_key)
       
-      // Upload audio directly to S3 using presigned URL
       const s3Response = await fetch(uploadData.upload_url, {
         method: 'PUT',
         headers: {
@@ -81,7 +73,6 @@ const AudioRecorder = ({ isRecording, isProcessing, onRecordingComplete, setIsRe
       
       console.log('Step 3: Starting AWS Transcribe job...')
       
-      // Start transcription
       const transcribeResponse = await fetch('http://localhost:5000/transcribe', {
         method: 'POST',
         headers: {
@@ -107,7 +98,6 @@ const AudioRecorder = ({ isRecording, isProcessing, onRecordingComplete, setIsRe
       console.log('✓ LaTeX:', transcribeData.latex_code)
       console.log('✓ Saved to:', transcribeData.filepath)
       
-      // Return both transcript and LaTeX
       onRecordingComplete({
         transcript: transcribeData.transcript_text,
         latex: transcribeData.latex_code
@@ -119,7 +109,6 @@ const AudioRecorder = ({ isRecording, isProcessing, onRecordingComplete, setIsRe
     }
   }
 
-  // Start recording
   const startRecording = async () => {
     try {
       audioChunksRef.current = []
@@ -136,23 +125,19 @@ const AudioRecorder = ({ isRecording, isProcessing, onRecordingComplete, setIsRe
       mediaRecorderRef.current = mediaRecorder
       mediaRecorder.start()
       
-      // Request data every second to ensure we capture audio even on early stops
       mediaRecorder.addEventListener('start', () => {
         mediaRecorder.requestData();
       });
       
-      // Start the timer
       let seconds = 0
       timerRef.current = setInterval(() => {
         seconds++
         setRecordingTime(seconds)
         
-        // Request data every second
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           mediaRecorderRef.current.requestData();
         }
         
-        // Auto-stop after 30 seconds
         if (seconds >= 30) {
           stopRecording()
         }
@@ -163,16 +148,12 @@ const AudioRecorder = ({ isRecording, isProcessing, onRecordingComplete, setIsRe
     }
   }
 
-  // Stop recording
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop()
-      
-      // Stop all tracks on the stream
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop())
     }
     
-    // Clear the timer
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
@@ -185,11 +166,9 @@ const AudioRecorder = ({ isRecording, isProcessing, onRecordingComplete, setIsRe
     if (isProcessing) return
     
     if (isRecording) {
-      // Stop recording
       setIsRecording(false)
       stopRecording()
     } else {
-      // Start recording
       setIsRecording(true)
       startRecording()
     }

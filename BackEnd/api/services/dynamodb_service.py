@@ -1,8 +1,3 @@
-"""
-DynamoDB Service Module
-Purpose: Manage SpeakTeX history records in AWS DynamoDB
-"""
-
 import os
 import uuid
 import json
@@ -11,7 +6,6 @@ from datetime import datetime
 from botocore.exceptions import ClientError
 from typing import Dict, List, Optional, Any
 
-# Get parent directory to access config
 import sys
 from pathlib import Path
 parent_dir = Path(__file__).parent.parent.parent
@@ -21,10 +15,8 @@ from api.config import Config, get_config
 
 
 class DynamoDBService:
-    """Service class for DynamoDB operations related to SpeakTeX history"""
     
     def __init__(self):
-        """Initialize DynamoDB client and table name"""
         config = get_config()
         
         self.table_name = config.DYNAMODB_TABLE_NAME
@@ -37,17 +29,6 @@ class DynamoDBService:
         self.table = self.dynamodb.Table(self.table_name)
     
     def save_history_record(self, user_id: str, transcript: str, latex: str) -> Dict[str, Any]:
-        """
-        Save a new history record to DynamoDB
-        
-        Args:
-            user_id: User identifier
-            transcript: Transcribed text
-            latex: Generated LaTeX code
-            
-        Returns:
-            Dictionary with saved record information
-        """
         timestamp = datetime.utcnow().isoformat()
         record_id = str(uuid.uuid4())
         
@@ -76,28 +57,15 @@ class DynamoDBService:
             }
     
     def get_user_history(self, user_id: str, limit: Optional[int] = None) -> Dict[str, Any]:
-        """
-        Get history records for a specific user
-        
-        Args:
-            user_id: User identifier
-            limit: Maximum number of records to return (optional)
-            
-        Returns:
-            Dictionary with user's history records
-        """
         try:
-            # Set up query parameters
             query_params = {
                 'KeyConditionExpression': boto3.dynamodb.conditions.Key('user_id').eq(user_id),
-                'ScanIndexForward': False  # Sort by timestamp descending (newest first)
+                'ScanIndexForward': False
             }
             
-            # Add limit if provided
             if limit and isinstance(limit, int) and limit > 0:
                 query_params['Limit'] = limit
             
-            # Execute query
             response = self.table.query(**query_params)
             
             return {
@@ -118,26 +86,15 @@ class DynamoDBService:
             }
     
     def delete_history_record(self, user_id: str, timestamp: str) -> Dict[str, Any]:
-        """
-        Delete a specific history record
-        
-        Args:
-            user_id: User identifier
-            timestamp: Record timestamp (sort key)
-            
-        Returns:
-            Dictionary with deletion result
-        """
         try:
             response = self.table.delete_item(
                 Key={
                     'user_id': user_id,
                     'timestamp': timestamp
                 },
-                ReturnValues='ALL_OLD'  # Return the deleted item
+                ReturnValues='ALL_OLD'
             )
             
-            # Check if item was actually deleted
             deleted_item = response.get('Attributes')
             if not deleted_item:
                 return {
@@ -161,17 +118,7 @@ class DynamoDBService:
             }
             
     def delete_all_user_history(self, user_id: str) -> Dict[str, Any]:
-        """
-        Delete all history records for a specific user
-        
-        Args:
-            user_id: User identifier
-            
-        Returns:
-            Dictionary with deletion result
-        """
         try:
-            # First get all records for the user
             result = self.get_user_history(user_id)
             
             if not result['success']:
@@ -186,7 +133,6 @@ class DynamoDBService:
                     'deleted_count': 0
                 }
             
-            # Delete each record
             deleted_count = 0
             failed_count = 0
             

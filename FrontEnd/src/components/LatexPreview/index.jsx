@@ -6,7 +6,6 @@ const LatexPreview = ({ latex }) => {
   const previewRef = useRef(null)
 
   useEffect(() => {
-    // Render MathJax ONLY in the preview area
     if (latex && window.MathJax && previewRef.current) {
       previewRef.current.textContent = latex
       window.MathJax.typesetPromise([previewRef.current])

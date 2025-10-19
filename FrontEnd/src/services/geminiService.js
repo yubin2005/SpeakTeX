@@ -1,14 +1,7 @@
-// Gemini API service for speech-to-latex conversion
-
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
 
 const geminiService = {
-  /**
-   * Convert spoken mathematical expression to LaTeX code
-   * @param {string} spokenText - The transcribed speech text
-   * @returns {Promise<string>} - The LaTeX code with delimiters
-   */
   async convertToLatex(spokenText) {
     const prompt = `Convert this spoken mathematical expression into complete LaTeX code.
 
@@ -50,20 +43,14 @@ Spoken expression: ${spokenText}`
 
       const data = await response.json()
       
-      // Extract LaTeX from response
       const latexCode = data.candidates?.[0]?.content?.parts?.[0]?.text
 
       if (!latexCode) {
         throw new Error('No LaTeX code returned from Gemini API')
       }
 
-      // Clean up the response - remove markdown code blocks if present
       let cleanedLatex = latexCode.trim()
-      
-      // Remove markdown code blocks (```latex ... ``` or ``` ... ```)
       cleanedLatex = cleanedLatex.replace(/```latex\s*/g, '').replace(/```\s*/g, '')
-      
-      // Trim whitespace
       cleanedLatex = cleanedLatex.trim()
 
       return cleanedLatex
