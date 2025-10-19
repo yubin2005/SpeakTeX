@@ -59,7 +59,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <Router basename="/SpeakTex">
       <div className="app-container">
         <Routes>
           <Route 
