@@ -15,6 +15,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import boto3
 from botocore.exceptions import ClientError
+import uuid
 
 # Add parent directory to path
 parent_dir = Path(__file__).parent.parent
@@ -23,6 +24,9 @@ sys.path.insert(0, str(parent_dir))
 # Load environment variables from BackEnd/.env
 env_path = parent_dir / '.env'
 load_dotenv(dotenv_path=env_path)
+
+# Import DynamoDB service
+from api.services.dynamodb_service import DynamoDBService
 
 
 def get_transcribe_client():
@@ -361,13 +365,49 @@ def save_transcript_result(transcript_data: dict, transcript_text: str, latex_co
     return str(filepath)
 
 
-def transcribe_audio_from_s3(s3_file_key: str, bucket_name: str = None) -> dict:
+def save_to_history(user_id: str, transcript_text: str, latex_code: str) -> dict:
+    """
+    Save transcription result to history using DynamoDB
+    
+    Args:
+        user_id: User identifier
+        transcript_text: Transcribed text
+        latex_code: Generated LaTeX code
+        
+    Returns:
+        Dictionary with save result
+    """
+    try:
+        # Initialize DynamoDB service
+        dynamodb_service = DynamoDBService()
+        
+        # Save to history
+        result = dynamodb_service.save_history_record(
+            user_id=user_id,
+            transcript=transcript_text,
+            latex=latex_code
+        )
+        
+        print(f"\n✓ Saved to history database: {result['success']}")
+        
+        return result
+        
+    except Exception as e:
+        print(f"✗ Failed to save to history: {str(e)}")
+        return {
+            'success': False,
+            'error': f"Failed to save to history: {str(e)}"
+        }
+
+
+def transcribe_audio_from_s3(s3_file_key: str, bucket_name: str = None, user_id: str = None) -> dict:
     """
     Complete transcription workflow
     
     Args:
         s3_file_key: S3 object key (e.g., "audio/recordings/file.webm")
         bucket_name: S3 bucket name (defaults to env variable)
+        user_id: Optional user identifier for history saving
         
     Returns:
         Dictionary with transcript text and file path
@@ -377,6 +417,10 @@ def transcribe_audio_from_s3(s3_file_key: str, bucket_name: str = None) -> dict:
         bucket_name = os.environ.get('S3_BUCKET_NAME')
         if not bucket_name:
             raise ValueError("S3_BUCKET_NAME not set in .env file")
+    
+    # Use default user_id if not provided
+    if not user_id:
+        user_id = "anonymous"
     
     # Construct S3 URI
     s3_uri = f"s3://{bucket_name}/{s3_file_key}"
@@ -400,15 +444,19 @@ def transcribe_audio_from_s3(s3_file_key: str, bucket_name: str = None) -> dict:
     # Step 5: Convert to LaTeX using Gemini
     latex_code = convert_to_latex(transcript_text)
     
-    # Step 6: Save results
+    # Step 6: Save results to file
     filepath = save_transcript_result(transcript_data, transcript_text, latex_code, job_name)
+    
+    # Step 7: Save to history database (silently - don't affect response if it fails)
+    history_result = save_to_history(user_id, transcript_text, latex_code)
     
     return {
         'success': True,
         'transcript_text': transcript_text,
         'latex_code': latex_code,
         'filepath': filepath,
-        'job_name': job_name
+        'job_name': job_name,
+        'history_saved': history_result.get('success', False)
     }
 
 
@@ -420,6 +468,7 @@ def lambda_handler(event: dict, context=None) -> dict:
         event: Lambda event containing:
             - s3_file_key: S3 object key to transcribe
             - bucket_name: Optional S3 bucket name
+            - user_id: Optional user identifier for history
         context: Lambda context object
         
     Returns:
@@ -431,11 +480,12 @@ def lambda_handler(event: dict, context=None) -> dict:
             raise ValueError("Missing required parameter: s3_file_key")
         
         bucket_name = event.get('bucket_name')
+        user_id = event.get('user_id', 'anonymous')
         
         print(f"Starting transcription workflow for: {s3_file_key}")
         
         # Run transcription
-        result = transcribe_audio_from_s3(s3_file_key, bucket_name)
+        result = transcribe_audio_from_s3(s3_file_key, bucket_name, user_id)
         
         return {
             'statusCode': 200,

@@ -1,0 +1,161 @@
+"""
+DynamoDB Service Module
+Purpose: Manage SpeakTeX history records in AWS DynamoDB
+"""
+
+import os
+import uuid
+import json
+import boto3
+from datetime import datetime
+from botocore.exceptions import ClientError
+from typing import Dict, List, Optional, Any
+
+# Get parent directory to access config
+import sys
+from pathlib import Path
+parent_dir = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(parent_dir))
+
+from api.config import Config, get_config
+
+
+class DynamoDBService:
+    """Service class for DynamoDB operations related to SpeakTeX history"""
+    
+    def __init__(self):
+        """Initialize DynamoDB client and table name"""
+        config = get_config()
+        
+        self.table_name = config.DYNAMODB_TABLE_NAME
+        self.dynamodb = boto3.resource(
+            'dynamodb',
+            aws_access_key_id=config.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY,
+            region_name=config.AWS_REGION
+        )
+        self.table = self.dynamodb.Table(self.table_name)
+    
+    def save_history_record(self, user_id: str, transcript: str, latex: str) -> Dict[str, Any]:
+        """
+        Save a new history record to DynamoDB
+        
+        Args:
+            user_id: User identifier
+            transcript: Transcribed text
+            latex: Generated LaTeX code
+            
+        Returns:
+            Dictionary with saved record information
+        """
+        timestamp = datetime.utcnow().isoformat()
+        record_id = str(uuid.uuid4())
+        
+        item = {
+            'user_id': user_id,
+            'timestamp': timestamp,
+            'id': record_id,
+            'transcript': transcript,
+            'latex': latex
+        }
+        
+        try:
+            self.table.put_item(Item=item)
+            return {
+                'success': True,
+                'record': item
+            }
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            print(f"DynamoDB Error: [{error_code}] {error_message}")
+            
+            return {
+                'success': False,
+                'error': f"Failed to save history record: {error_message}"
+            }
+    
+    def get_user_history(self, user_id: str, limit: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Get history records for a specific user
+        
+        Args:
+            user_id: User identifier
+            limit: Maximum number of records to return (optional)
+            
+        Returns:
+            Dictionary with user's history records
+        """
+        try:
+            # Set up query parameters
+            query_params = {
+                'KeyConditionExpression': boto3.dynamodb.conditions.Key('user_id').eq(user_id),
+                'ScanIndexForward': False  # Sort by timestamp descending (newest first)
+            }
+            
+            # Add limit if provided
+            if limit and isinstance(limit, int) and limit > 0:
+                query_params['Limit'] = limit
+            
+            # Execute query
+            response = self.table.query(**query_params)
+            
+            return {
+                'success': True,
+                'records': response.get('Items', []),
+                'count': len(response.get('Items', [])),
+                'last_evaluated_key': response.get('LastEvaluatedKey')
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            print(f"DynamoDB Error: [{error_code}] {error_message}")
+            
+            return {
+                'success': False,
+                'error': f"Failed to get user history: {error_message}"
+            }
+    
+    def delete_history_record(self, user_id: str, timestamp: str) -> Dict[str, Any]:
+        """
+        Delete a specific history record
+        
+        Args:
+            user_id: User identifier
+            timestamp: Record timestamp (sort key)
+            
+        Returns:
+            Dictionary with deletion result
+        """
+        try:
+            response = self.table.delete_item(
+                Key={
+                    'user_id': user_id,
+                    'timestamp': timestamp
+                },
+                ReturnValues='ALL_OLD'  # Return the deleted item
+            )
+            
+            # Check if item was actually deleted
+            deleted_item = response.get('Attributes')
+            if not deleted_item:
+                return {
+                    'success': False,
+                    'error': 'Record not found'
+                }
+            
+            return {
+                'success': True,
+                'deleted_record': deleted_item
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            print(f"DynamoDB Error: [{error_code}] {error_message}")
+            
+            return {
+                'success': False,
+                'error': f"Failed to delete history record: {error_message}"
+            }

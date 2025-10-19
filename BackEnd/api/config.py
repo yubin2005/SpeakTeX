@@ -33,6 +33,7 @@ class Config:
     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
     AWS_REGION = os.environ.get('AWS_REGION', 'us-east-2')
     S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')
+    DYNAMODB_TABLE_NAME = os.environ.get('DYNAMODB_TABLE_NAME', 'speaktex-history')
     
     # Gemini API Configuration
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -59,6 +60,7 @@ class Config:
             'AWS_ACCESS_KEY_ID': Config.AWS_ACCESS_KEY_ID,
             'AWS_SECRET_ACCESS_KEY': Config.AWS_SECRET_ACCESS_KEY,
             'S3_BUCKET_NAME': Config.S3_BUCKET_NAME,
+            'DYNAMODB_TABLE_NAME': Config.DYNAMODB_TABLE_NAME,
             'GEMINI_API_KEY': Config.GEMINI_API_KEY,
         }
         
