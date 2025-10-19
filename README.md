@@ -19,24 +19,24 @@
 
 ## ✨ Key Features
 
-- **Real-time Voice Input** -
-- **Instant LaTeX Generation** -
-- **Live Preview** -
+- **Real-time Voice Input** - Record mathematical expressions using your microphone
+- **Instant LaTeX Generation** - Powered by Gemini AI for accurate speech-to-LaTeX conversion
+- **Live Preview** - Real-time mathematical rendering using MathJax
 - **One-Click Copy** - Copy generated LaTeX code directly to your clipboard
-- **High Accuracy** -
-- **Cross-Platform** -
+- **High Accuracy** - Using Gemini-2.5 Flash to understand mathematical terminology
+- **Cross-Platform** - Works on any modern web browser with microphone support
 
 ## 👥 Team Roles
 
-| Team Member | Contribution |
-| ----------- | ------------ |
-| Yubin Li    |              |
-| Zongze Wu   |              |
+| Team Member | Contribution                                                                                        |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| Yubin Li    | Frontend Login System, Audio Recording & Processing, UI/UX Optimization, Backend History Management |
+| Zongze Wu   | AWS Architecture, Lambda Functions, S3/DynamoDB Integration, Gemini API Integration                 |
 
 ## 🧩 Tech Stack
 
-- **Frontend:** React
-- **Backend:**
-- **AI Model:**
-- **LaTeX Rendering:**
-- **Tools:**
+- **Frontend:** React + Vite
+- **Backend:** AWS Lambda + Flask API + AWS S3 + DynamoDB
+- **AI Model:** Google Gemini 1.5 Flash API
+- **LaTeX Rendering:** MathJax
+- **Tools:** AWS Transcribe, Axios, MediaRecorder API
