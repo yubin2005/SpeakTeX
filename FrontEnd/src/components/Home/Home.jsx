@@ -57,17 +57,11 @@ const Home = ({ isLoggedIn, username, handleLogout }) => {
     try {
       // Call Gemini API to convert text to LaTeX
       const latexText = await geminiService.convertToLatex(transcriptText)
-      const endTime = performance.now()
-      const duration = ((endTime - startTime) / 1000).toFixed(1)
       
       setLatex(latexText)
-      setProcessingTime(duration)
-      setSuccessMessage(`✅ Generated in ${duration}s`)
-      
-      // Clear success message after 5 seconds
-      setTimeout(() => {
-        setSuccessMessage('')
-      }, 5000)
+      // Remove processing time and success message display
+      setProcessingTime(null)
+      setSuccessMessage('')
     } catch (err) {
       console.error('Error converting to LaTeX:', err)
       

@@ -73,6 +73,9 @@
 .card {
   position: relative;
   overflow: hidden;
+  height: 400px; /* Fixed height for all cards */
+  display: flex;
+  flex-direction: column;
 }
 
 .card::before {

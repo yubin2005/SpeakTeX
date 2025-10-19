@@ -49,7 +49,7 @@ const TranscriptDisplay = ({ transcript, onTranscriptChange, onSubmit, isProcess
           {isProcessing ? '⏳' : '✨'}
         </span>
         <span className="generate-text">
-          {isProcessing ? 'Generating...' : 'Generate LaTeX'}
+          {isProcessing ? 'Processing...' : 'Generate LaTeX'}
         </span>
       </button>
     </div>
