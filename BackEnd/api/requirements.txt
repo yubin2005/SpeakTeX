@@ -16,7 +16,7 @@ requests==2.31.0
 gunicorn==21.2.0
 
 # Type Hints and Validation
-pydantic==2.5.0
+pydantic==2.8.0
 
 # Utilities
 python-dateutil==2.8.2
