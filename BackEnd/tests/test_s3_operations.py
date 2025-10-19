@@ -1,14 +1,14 @@
 """
-Test S3 Upload and Download Operations
-Tests basic S3 file operations: upload, download, verify, delete
+Test Real Audio File Upload to S3
+Tests uploading an actual .webm audio file to the audio/ directory
 """
 
 import boto3
 from botocore.exceptions import ClientError
-import tempfile
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Load environment variables from .env file in backend directory
 backend_dir = Path(__file__).parent.parent
@@ -29,20 +29,42 @@ if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
         "  S3_BUCKET_NAME=your_bucket"
     )
 
-TEST_KEY = "test/hello.txt"
-TEST_CONTENT = "Hello SpeakTeX! This is a test file."
+# Your actual audio file path
+AUDIO_FILE_PATH = r"F:\SpeakTex\BackEnd\temp_audio.webm"
+
+
+def format_file_size(size_bytes):
+    """Convert bytes to human readable format"""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size_bytes < 1024.0:
+            return f"{size_bytes:.2f} {unit}"
+        size_bytes /= 1024.0
+    return f"{size_bytes:.2f} TB"
 
 
 def main():
     """Main test function"""
-    print("\n" + "="*60)
-    print("Testing S3 Operations")
-    print("="*60 + "\n")
+    print("\n" + "="*70)
+    print("Testing Real Audio File Upload to S3")
+    print("="*70 + "\n")
     
-    print(f"Bucket: {BUCKET_NAME}")
-    print(f"Test Key: {TEST_KEY}\n")
+    # Step 0: Check if file exists
+    print("Step 0: Checking if audio file exists... ", end="", flush=True)
+    if not os.path.exists(AUDIO_FILE_PATH):
+        print("❌")
+        print(f"\n   Error: File not found at {AUDIO_FILE_PATH}")
+        print("   Please ensure the file exists at this location.\n")
+        return False
+    
+    file_size = os.path.getsize(AUDIO_FILE_PATH)
+    print("✅")
+    print(f"   File: {AUDIO_FILE_PATH}")
+    print(f"   Size: {format_file_size(file_size)}\n")
     
     # Initialize S3 client
+    print(f"Bucket: {BUCKET_NAME}")
+    print(f"Region: {AWS_REGION}\n")
+    
     s3_client = boto3.client(
         's3',
         aws_access_key_id=AWS_ACCESS_KEY_ID,
@@ -50,67 +72,109 @@ def main():
         region_name=AWS_REGION
     )
     
-    test_file_path = None
-    download_file_path = None
+    # Generate S3 key with timestamp (matching your backend logic)
+    timestamp = int(datetime.now().timestamp() * 1000)
+    s3_key = f"audio/{timestamp}_temp_audio.webm"
+    
     all_success = True
     
     try:
-        # Step 1: Create test file
-        print("Step 1: Creating test file... ", end="", flush=True)
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
-            f.write(TEST_CONTENT)
-            test_file_path = f.name
-        print("✅")
-        
-        # Step 2: Upload to S3
-        print("Step 2: Uploading to S3... ", end="", flush=True)
+        # Step 1: Upload to S3
+        print("Step 1: Uploading audio file to S3... ", end="", flush=True)
         try:
             s3_client.upload_file(
-                test_file_path,
+                AUDIO_FILE_PATH,
                 BUCKET_NAME,
-                TEST_KEY,
-                ExtraArgs={'ContentType': 'text/plain'}
+                s3_key,
+                ExtraArgs={
+                    'ContentType': 'audio/webm',
+                    'Metadata': {
+                        'original-filename': 'temp_audio.webm',
+                        'upload-timestamp': str(timestamp)
+                    }
+                }
             )
             print("✅")
+            print(f"   Uploaded to: s3://{BUCKET_NAME}/{s3_key}")
         except ClientError as e:
             print(f"❌\n   Error: {e.response['Error']['Message']}")
             all_success = False
             raise
         
-        # Step 3: Download from S3
-        print("Step 3: Downloading from S3... ", end="", flush=True)
+        # Step 2: Verify file exists in S3
+        print("\nStep 2: Verifying file in S3... ", end="", flush=True)
         try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.txt') as f:
-                download_file_path = f.name
+            response = s3_client.head_object(Bucket=BUCKET_NAME, Key=s3_key)
+            s3_size = response['ContentLength']
+            print("✅")
+            print(f"   S3 Size: {format_file_size(s3_size)}")
+            print(f"   Content-Type: {response.get('ContentType', 'N/A')}")
+            print(f"   Last Modified: {response.get('LastModified', 'N/A')}")
             
-            s3_client.download_file(BUCKET_NAME, TEST_KEY, download_file_path)
-            print("✅")
+            # Verify size matches
+            if s3_size == file_size:
+                print("   ✅ File size matches!")
+            else:
+                print(f"   ⚠️  Size mismatch: Local={format_file_size(file_size)}, S3={format_file_size(s3_size)}")
+                
         except ClientError as e:
             print(f"❌\n   Error: {e.response['Error']['Message']}")
             all_success = False
-            raise
         
-        # Step 4: Verify content
-        print("Step 4: Verifying content... ", end="", flush=True)
-        with open(download_file_path, 'r') as f:
-            downloaded_content = f.read()
-        
-        if downloaded_content == TEST_CONTENT:
-            print("✅")
-        else:
-            print("❌")
-            print(f"   Expected: {TEST_CONTENT}")
-            print(f"   Got: {downloaded_content}")
-            all_success = False
-        
-        # Step 5: Cleanup - Delete from S3
-        print("Step 5: Cleaning up... ", end="", flush=True)
+        # Step 3: List files in audio/ directory
+        print("\nStep 3: Listing files in audio/ directory... ", end="", flush=True)
         try:
-            s3_client.delete_object(Bucket=BUCKET_NAME, Key=TEST_KEY)
-            print("✅")
+            response = s3_client.list_objects_v2(
+                Bucket=BUCKET_NAME,
+                Prefix='audio/',
+                MaxKeys=10
+            )
+            
+            if 'Contents' in response:
+                file_count = len(response['Contents'])
+                print(f"✅ Found {file_count} file(s)")
+                print("\n   Recent files:")
+                for obj in response['Contents'][:5]:  # Show max 5 files
+                    print(f"   - {obj['Key']} ({format_file_size(obj['Size'])})")
+            else:
+                print("✅ (Directory empty)")
+                
         except ClientError as e:
             print(f"❌\n   Error: {e.response['Error']['Message']}")
-            all_success = False
+        
+        # Step 4: Generate pre-signed URL for download/verification
+        print("\nStep 4: Generating pre-signed URL... ", end="", flush=True)
+        try:
+            url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': BUCKET_NAME, 'Key': s3_key},
+                ExpiresIn=3600  # 1 hour
+            )
+            print("✅")
+            print(f"\n   You can download the file using this URL (valid for 1 hour):")
+            print(f"   {url[:80]}...")
+        except ClientError as e:
+            print(f"❌\n   Error: {e.response['Error']['Message']}")
+        
+        # Step 5: Ask if user wants to delete the test file
+        print("\n" + "="*70)
+        print("Upload successful! The file is now in S3.")
+        print("="*70)
+        
+        delete_choice = input("\nDo you want to delete the test file from S3? (y/n): ").strip().lower()
+        
+        if delete_choice == 'y':
+            print("\nStep 5: Deleting test file from S3... ", end="", flush=True)
+            try:
+                s3_client.delete_object(Bucket=BUCKET_NAME, Key=s3_key)
+                print("✅")
+                print("   File deleted successfully")
+            except ClientError as e:
+                print(f"❌\n   Error: {e.response['Error']['Message']}")
+                all_success = False
+        else:
+            print("\n   File kept in S3. You can access it at:")
+            print(f"   s3://{BUCKET_NAME}/{s3_key}")
         
     except Exception as e:
         print(f"\n❌ Test failed with error: {str(e)}")
@@ -119,25 +183,20 @@ def main():
         # Try to cleanup even if test failed
         try:
             print("\nAttempting cleanup after error... ", end="", flush=True)
-            s3_client.delete_object(Bucket=BUCKET_NAME, Key=TEST_KEY)
+            s3_client.delete_object(Bucket=BUCKET_NAME, Key=s3_key)
             print("✅")
         except:
             print("❌ (File may not exist)")
     
-    finally:
-        # Clean up local files
-        if test_file_path and os.path.exists(test_file_path):
-            os.unlink(test_file_path)
-        if download_file_path and os.path.exists(download_file_path):
-            os.unlink(download_file_path)
-    
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "="*70)
     if all_success:
-        print("✅ All S3 operations working!")
+        print("✅ Audio file upload test passed!")
+        print(f"\n   File location: s3://{BUCKET_NAME}/{s3_key}")
+        print(f"   File size: {format_file_size(file_size)}")
     else:
-        print("❌ Some S3 operations failed")
-    print("="*60 + "\n")
+        print("❌ Some operations failed")
+    print("="*70 + "\n")
     
     return all_success
 
@@ -146,4 +205,3 @@ if __name__ == "__main__":
     import sys
     success = main()
     sys.exit(0 if success else 1)
-

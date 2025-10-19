@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import './styles.css'
 
 const LatexPreview = ({ latex }) => {
   const [copied, setCopied] = useState(false)
+  const previewRef = useRef(null)
 
   useEffect(() => {
-    // Trigger MathJax to render when latex changes
-    if (latex && window.MathJax) {
-      window.MathJax.typesetPromise().catch((err) => console.error('MathJax error:', err))
+    // Render MathJax ONLY in the preview area
+    if (latex && window.MathJax && previewRef.current) {
+      previewRef.current.textContent = latex
+      window.MathJax.typesetPromise([previewRef.current])
+        .catch((err) => console.error('MathJax error:', err))
     }
   }, [latex])
 
@@ -29,16 +32,14 @@ const LatexPreview = ({ latex }) => {
           <div className="latex-code-section">
             <h3 className="section-label">LaTeX Code</h3>
             <div className="latex-code">
-              <code>{latex}</code>
+              <pre><code>{latex}</code></pre>
             </div>
           </div>
           
           <div className="latex-render-section">
             <h3 className="section-label">Preview</h3>
             <div className="latex-render">
-              <div className="math-display">
-                {`$$${latex}$$`}
-              </div>
+              <div className="math-display" ref={previewRef}></div>
             </div>
           </div>
 
@@ -60,7 +61,7 @@ const LatexPreview = ({ latex }) => {
           <div className="example-preview">
             <p className="example-label">Example:</p>
             <div className="math-display example">
-              {`$$x^2 + 2x + 1 = 0$$`}
+              $$x^2 + 2x + 1 = 0$$
             </div>
           </div>
         </div>
