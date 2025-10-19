@@ -1,0 +1,106 @@
+name: Deploy to GitHub Pages
+
+on:
+  # Trigger deployment on push to main branch (only when frontend files change)
+  push:
+    branches:
+      - main
+    paths:
+      - 'FrontEnd/**'
+      - '.github/workflows/deploy.yml'
+  
+  # Allow manual workflow dispatch for on-demand deployments
+  workflow_dispatch:
+
+# Sets permissions for GitHub Pages deployment
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git operations
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: FrontEnd/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./FrontEnd
+        run: npm ci
+      
+      - name: Build production bundle
+        working-directory: ./FrontEnd
+        run: npm run build
+        env:
+          NODE_ENV: production
+      
+      - name: Verify build output
+        working-directory: ./FrontEnd
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: Build directory 'dist' not found!"
+            exit 1
+          fi
+          echo "Build successful! Contents:"
+          ls -la dist/
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./FrontEnd/dist
+          publish_branch: gh-pages
+          commit_message: 'Deploy: ${{ github.event.head_commit.message }} [ci skip]'
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          force_orphan: true  # Keep gh-pages branch clean
+      
+      - name: Create deployment summary
+        if: success()
+        run: |
+          echo "### 🚀 Deployment Successful! :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Live URL:** https://yubin2005.github.io/SpeakTex/" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Visit your site at: https://yubin2005.github.io/SpeakTex/" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ github.run_number }}
+          path: FrontEnd/dist/
+          retention-days: 7
+          if-no-files-found: error
+      
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "### ❌ Deployment Failed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Failed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the workflow logs for details." >> $GITHUB_STEP_SUMMARY
+
