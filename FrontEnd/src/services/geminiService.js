@@ -1,6 +1,6 @@
 // Gemini API service for speech-to-latex conversion
 
-const GEMINI_API_KEY = 'AIzaSyDM0wa6jUmfv9mW9MZsJ2LB94nhR0KHbqo'
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
 
 const geminiService = {
