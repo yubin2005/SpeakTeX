@@ -60,10 +60,15 @@ class HistoryRoutes:
             timestamp = path_parts[3]
             return HistoryRoutes._handle_delete_history(handler, dynamodb_service, user_id, timestamp)
             
+        # Route: DELETE /api/history/<user_id>
+        elif method == 'DELETE' and len(path_parts) == 3:
+            user_id = path_parts[2]
+            return HistoryRoutes._handle_delete_all_history(handler, dynamodb_service, user_id)
+            
         # Handle OPTIONS for CORS
         elif method == 'OPTIONS':
-            HistoryRoutes._send_cors_headers(handler)
             handler.send_response(200)
+            HistoryRoutes._send_cors_headers(handler)
             handler.end_headers()
             return True
             
@@ -150,6 +155,24 @@ class HistoryRoutes:
                 HistoryRoutes._send_json(handler, 200, result)
             elif 'Record not found' in result.get('error', ''):
                 HistoryRoutes._send_error(handler, 404, result['error'])
+            else:
+                HistoryRoutes._send_error(handler, 500, result['error'])
+                
+            return True
+            
+        except Exception as e:
+            HistoryRoutes._send_error(handler, 500, f"Internal server error: {str(e)}")
+            return True
+            
+    @staticmethod
+    def _handle_delete_all_history(handler: BaseHTTPRequestHandler, dynamodb_service: DynamoDBService, user_id: str) -> bool:
+        """Handle DELETE /api/history/<user_id> to delete all records for a user"""
+        try:
+            # Delete all history records for user
+            result = dynamodb_service.delete_all_user_history(user_id)
+            
+            if result['success']:
+                HistoryRoutes._send_json(handler, 200, result)
             else:
                 HistoryRoutes._send_error(handler, 500, result['error'])
                 

@@ -6,6 +6,7 @@ Purpose: Verify DynamoDB connectivity and table operations
 import os
 import sys
 import uuid
+import time
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -151,9 +152,107 @@ def test_read_records():
             if count > 3:
                 print(f"\n... and {count - 3} more records")
                 
-            return True
+            return True, records
         else:
             print(f"✗ Failed to read records: {result.get('error', 'Unknown error')}")
+            return False, []
+            
+    except Exception as e:
+        print(f"✗ Error: {str(e)}")
+        return False, []
+
+
+def test_delete_record():
+    """Test deleting a record from DynamoDB"""
+    print("\n=== Testing DynamoDB Delete Operation ===")
+    
+    try:
+        # Create DynamoDB service
+        dynamodb_service = DynamoDBService()
+        
+        # First get records to find one to delete
+        read_ok, records = test_read_records()
+        
+        if not read_ok or not records:
+            print("✗ No records available to delete. Create a record first.")
+            return False
+        
+        # Get the first record
+        record = records[0]
+        user_id = record['user_id']
+        timestamp = record['timestamp']
+        
+        print(f"\nDeleting record:")
+        print(f"  User ID: {user_id}")
+        print(f"  Timestamp: {timestamp}")
+        
+        # Delete record
+        result = dynamodb_service.delete_history_record(user_id, timestamp)
+        
+        if result['success']:
+            print(f"✓ Successfully deleted record from DynamoDB")
+            print(f"  Deleted record ID: {result['deleted_record']['id']}")
+            return True
+        else:
+            print(f"✗ Failed to delete record: {result.get('error', 'Unknown error')}")
+            return False
+            
+    except Exception as e:
+        print(f"✗ Error: {str(e)}")
+        return False
+
+
+def test_delete_all_records():
+    """Test deleting all records for a user from DynamoDB"""
+    print("\n=== Testing DynamoDB Batch Delete Operation ===")
+    
+    try:
+        # Create DynamoDB service
+        dynamodb_service = DynamoDBService()
+        
+        # Create a test user ID
+        user_id = f"test_batch_delete_{int(time.time())}"
+        
+        # Create some test records
+        print(f"Creating test records for user: {user_id}")
+        for i in range(3):
+            transcript = f"Test transcript {i+1}"
+            latex = f"Test LaTeX {i+1}"
+            result = dynamodb_service.save_history_record(user_id, transcript, latex)
+            if result['success']:
+                print(f"  ✓ Created test record {i+1}")
+            else:
+                print(f"  ✗ Failed to create test record {i+1}")
+        
+        # Verify records were created
+        read_result = dynamodb_service.get_user_history(user_id)
+        if not read_result['success'] or not read_result['records']:
+            print("✗ Failed to create test records or retrieve them.")
+            return False
+        
+        records_count = len(read_result['records'])
+        print(f"Created {records_count} test records for user: {user_id}")
+        
+        # Delete all records for the test user
+        print(f"\nDeleting all records for user: {user_id}")
+        result = dynamodb_service.delete_all_user_history(user_id)
+        
+        if result['success']:
+            print(f"✓ Successfully deleted all records")
+            print(f"  Deleted: {result['deleted_count']}")
+            print(f"  Failed: {result['failed_count']}")
+            print(f"  Total: {result['total_count']}")
+            
+            # Verify records were deleted
+            verify_result = dynamodb_service.get_user_history(user_id)
+            if verify_result['success'] and len(verify_result['records']) == 0:
+                print(f"✓ Verified all records were deleted")
+                return True
+            else:
+                print(f"✗ Some records were not deleted. Remaining: {len(verify_result.get('records', []))}")
+                return False
+        else:
+            print(f"✗ Failed to delete all records: {result.get('error', 'Unknown error')}")
             return False
             
     except Exception as e:
@@ -174,14 +273,24 @@ if __name__ == "__main__":
         write_ok = test_write_record()
         
         # Test read operation
-        read_ok = test_read_records()
+        read_ok, _ = test_read_records()
+        
+        # Test delete operation
+        delete_ok = False
+        if read_ok:
+            delete_ok = test_delete_record()
+            
+        # Test batch delete operation
+        batch_delete_ok = test_delete_all_records()
         
         print("\n=== Summary ===")
         print(f"Connection Test: {'✓ Passed' if connection_ok else '✗ Failed'}")
         print(f"Write Test: {'✓ Passed' if write_ok else '✗ Failed'}")
         print(f"Read Test: {'✓ Passed' if read_ok else '✗ Failed'}")
+        print(f"Delete Test: {'✓ Passed' if delete_ok else '✗ Failed'}")
+        print(f"Batch Delete Test: {'✓ Passed' if batch_delete_ok else '✗ Failed'}")
         
-        if connection_ok and write_ok and read_ok:
+        if connection_ok and write_ok and read_ok and delete_ok and batch_delete_ok:
             print("\n✓ All tests passed! DynamoDB is working correctly.")
         else:
             print("\n✗ Some tests failed. Please check the errors above.")

@@ -159,3 +159,55 @@ class DynamoDBService:
                 'success': False,
                 'error': f"Failed to delete history record: {error_message}"
             }
+            
+    def delete_all_user_history(self, user_id: str) -> Dict[str, Any]:
+        """
+        Delete all history records for a specific user
+        
+        Args:
+            user_id: User identifier
+            
+        Returns:
+            Dictionary with deletion result
+        """
+        try:
+            # First get all records for the user
+            result = self.get_user_history(user_id)
+            
+            if not result['success']:
+                return result
+                
+            records = result['records']
+            
+            if not records:
+                return {
+                    'success': True,
+                    'message': 'No records found to delete',
+                    'deleted_count': 0
+                }
+            
+            # Delete each record
+            deleted_count = 0
+            failed_count = 0
+            
+            for record in records:
+                timestamp = record['timestamp']
+                delete_result = self.delete_history_record(user_id, timestamp)
+                
+                if delete_result['success']:
+                    deleted_count += 1
+                else:
+                    failed_count += 1
+            
+            return {
+                'success': True,
+                'deleted_count': deleted_count,
+                'failed_count': failed_count,
+                'total_count': len(records)
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f"Failed to delete user history: {str(e)}"
+            }

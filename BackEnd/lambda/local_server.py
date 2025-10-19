@@ -25,14 +25,6 @@ from api.routes.history_routes import HistoryRoutes
 class LambdaTestHandler(BaseHTTPRequestHandler):
     """HTTP request handler that simulates Lambda function invocation"""
     
-    def do_OPTIONS(self):
-        """Handle CORS preflight"""
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS, GET')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
-    
     def do_POST(self):
         """Handle POST requests"""
         # First try to handle with history routes
